@@ -38,7 +38,7 @@ namespace WebApi.Controllers
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]);
+            var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"] + "PTNET8+123456789_123456789+PTNET8");
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
