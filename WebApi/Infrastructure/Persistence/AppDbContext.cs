@@ -1,19 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using WebApi.Domain.Entities;
-using HostEntity = WebApi.Domain.Entities.Host;
-using UserEntity = WebApi.Domain.Entities.User;
+using Host = WebApi.Domain.Entities.Host;
+
 
 namespace WebApi.Infrastructure.Persistence
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
-
         public DbSet<Property> Properties { get; set; }
-        public DbSet<HostEntity> Hosts { get; set; }
-        public DbSet<UserEntity> Users { get; set; }
+        public DbSet<Host> Hosts { get; set; }
+        public DbSet<User> Users { get; set; }
         public DbSet<DomainEvent> DomainEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,6 +27,11 @@ namespace WebApi.Infrastructure.Persistence
             modelBuilder.Entity<Property>()
                 .HasIndex(p => p.HostId)
                 .HasDatabaseName("IX_Property_HostId");
+
+            modelBuilder.Entity<Host>()
+                .HasIndex(h => h.Name)
+                .IsUnique()
+                .HasDatabaseName("IX_Host_Name");
         }
     }
 }

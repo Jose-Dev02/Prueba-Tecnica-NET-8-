@@ -20,11 +20,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register repositories
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
+builder.Services.AddScoped<IHostRepository, HostRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Configure FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UserValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<HostValidator>();
 builder.Services.AddFluentValidationAutoValidation();
+
+//AutoMapper Configuration
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
