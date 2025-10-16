@@ -56,7 +56,7 @@ namespace WebApi.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            return Ok(new { token111111z = tokenString });
+            return Ok(new { token = tokenString });
         }
 
         [HttpPost("signUp")]
