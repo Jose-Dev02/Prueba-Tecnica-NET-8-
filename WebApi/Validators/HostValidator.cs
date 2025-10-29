@@ -7,9 +7,9 @@ namespace WebApi.Validators
     {
         public HostValidator()
         {
-            RuleFor(h => h.Name)
-                .NotEmpty().WithMessage("The host name is required.")
-                .MaximumLength(100).WithMessage("The host name must not exceed 100 characters.");
+            RuleFor(h => h.FullName)
+                .NotEmpty().WithMessage("The host full name is required.")
+                .MaximumLength(100).WithMessage("The host full name must not exceed 100 characters.");
         }
     }
 }

@@ -11,7 +11,7 @@ namespace WebApi.Domain.RequestObjects
 
         [Required] 
         [MaxLength(200)]
-        public required string Address { get; set; }
+        public required string Location { get; set; }
 
         [Required]
         public Guid HostId { get; set; }

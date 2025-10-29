@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using WebApi.Domain.Entities;
 using WebApi.Domain.Repositories;
 using WebApi.Infrastructure.Persistence;
@@ -21,15 +22,28 @@ namespace WebApi.Controllers
         {
             try
             {
+                var property = await _context.Properties.FirstOrDefaultAsync();
+                if (property == null)
+                {
+                    return BadRequest(new { message = "No property found to associate with the event." });
+                }
+
                 var domainEvent = new DomainEvent
                 {
-                    EventType = "Sync",
-                    CreatedAt = DateTime.UtcNow
+                    EventType = "SyncWithOTAs",
+                    CreatedAt = DateTime.UtcNow,
+                    Property = property,
+                    PayloadJSON = JsonSerializer.Serialize(new
+                    {
+                        ota = "Booking.com", 
+                        status = "completed"
+
+                    }),
                 };
 
                 _context.DomainEvents.Add(domainEvent);
                 await _unitOfWork.CompleteAsync();
-                return Ok(new { message = "OTAs synchronized successfully" });
+                return Ok(domainEvent);
             }
             catch(Exception e)
             {

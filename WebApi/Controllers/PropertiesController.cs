@@ -20,18 +20,11 @@ namespace WebApi.Controllers
 
         [HttpGet("getAll")]
         [Authorize]
-        public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? name = null, [FromQuery] string? address = null)
+        public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
-                Expression<Func<Property_DTO, bool>>? filter = null;
-
-                if (!string.IsNullOrEmpty(name) || !string.IsNullOrEmpty(address))
-                {
-                    filter = p => (name == null || p.Name.Contains(name)) && (address == null || p.Address.Contains(address));
-                }
-
-                var properties = await _propertyRepository.GetAllAsync(page, pageSize, filter);
+                var properties = await _propertyRepository.GetAllAsync(page, pageSize);
                 return Ok(properties);
             }
             catch(Exception e)
@@ -49,13 +42,6 @@ namespace WebApi.Controllers
 
                 var existingHost = await _hostRepository.GetByIdAsync(propertyRequest.HostId);
 
-                var existingProperty = await _propertyRepository.GetByNameAsync(propertyRequest.Name, propertyRequest.HostId);
-
-                if (existingProperty != null)
-                {
-                    return BadRequest(new { message = "Property with the same name already exists." });
-                }
-
                 if (existingHost == null)
                 {
                     return BadRequest(new { message = "Host not found." });
@@ -65,7 +51,7 @@ namespace WebApi.Controllers
                 {
                     Id = Guid.NewGuid(),
                     Name = propertyRequest.Name,
-                    Address = propertyRequest.Address,
+                    Location = propertyRequest.Location,
                     HostId = propertyRequest.HostId
                 };
 
@@ -100,18 +86,11 @@ namespace WebApi.Controllers
                     return NotFound(new { message = "Host not exists." });
                 }
 
-                var validatingNewObject = await _propertyRepository.GetByNameAsync(propertyRequest.Name, propertyRequest.HostId);
-
-                if(validatingNewObject != null)
-                {
-                    return BadRequest(new { message = "Another property with the same name already exists." });
-                }
-
                 existingProperty.Name = propertyRequest.Name;
-                existingProperty.Address = propertyRequest.Address;
+                existingProperty.Location = propertyRequest.Location;
                 existingProperty.HostId = propertyRequest.HostId;
 
-                _propertyRepository.Update(existingProperty);
+                await _propertyRepository.Update(existingProperty);
                 await _unitOfWork.CompleteAsync();
 
                 return Ok(existingProperty);
@@ -135,7 +114,7 @@ namespace WebApi.Controllers
                     return NotFound();
                 }
 
-                _propertyRepository.Delete(property);
+                await _propertyRepository.Delete(property);
                 await _unitOfWork.CompleteAsync();
 
                 return Ok(property);

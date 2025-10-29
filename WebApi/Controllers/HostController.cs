@@ -36,18 +36,20 @@ namespace WebApi.Controllers
         {
             try
             {
-                var existingHost = await _hostRepository.GetByNameAsync(hostRequest.Name);
+                var existingHost = await _hostRepository.GetByFullNameAsync(hostRequest.FullName);
 
                 if (existingHost != null)
                 {
-                    return BadRequest(new { message = "Host with the same name already exists." });
+                    return BadRequest(new { message = "Host with the same full name already exists." });
                 }
 
                 var newHost = new Host
                 {
                     Id = Guid.NewGuid(),
-                    Name = hostRequest.Name,
-                    Properties = []
+                    FullName = hostRequest.FullName,
+                    Email = hostRequest.Email,
+                    Phone = hostRequest.Phone,
+                    Properties = new List<Property>()
                 };
 
                 await _hostRepository.AddAsync(newHost);
@@ -62,31 +64,26 @@ namespace WebApi.Controllers
 
         [HttpPut("update")]
         [Authorize]
-        public async Task<IActionResult> Update([FromQuery] Guid? id, [FromQuery] string? name, [FromBody] HostRequest hostRequest)
+        public async Task<IActionResult> Update([FromQuery] Guid id, [FromBody] HostRequest hostRequest)
         {
             try
             {
-                if (id == null && string.IsNullOrEmpty(name))
-                {
-                    return BadRequest(new { message = "You must provide either an id or a name to perform the update." });
-                }
-
-                var existingHost = id != null
-                    ? await _hostRepository.GetByIdAsync(id)
-                    : await _hostRepository.GetByNameAsync(name);
-
+                var existingHost = await _hostRepository.GetByIdAsync(id);
+                    
                 if (existingHost == null)
                 {
                     return NotFound(new { message = "Host not found" });
                 }
 
-                var hostWithSameName = await _hostRepository.GetByNameAsync(hostRequest.Name);
-                if (hostWithSameName != null)
+                var hostWithSameFullName = await _hostRepository.GetByFullNameAsync(hostRequest.FullName);
+                if (hostWithSameFullName != null)
                 {
-                    return BadRequest(new { message = "Another host with the same name already exists." });
+                    return BadRequest(new { message = "Another host with the same full name already exists." });
                 }
 
-                existingHost.Name = hostRequest.Name;
+                existingHost.FullName = hostRequest.FullName;
+                existingHost.Email = hostRequest.Email;
+                existingHost.Phone = hostRequest.Phone;
 
                 _hostRepository.Update(existingHost);
                 await _unitOfWork.CompleteAsync();
@@ -101,18 +98,11 @@ namespace WebApi.Controllers
 
         [HttpDelete("delete")]
         [Authorize]
-        public async Task<IActionResult> Delete([FromQuery] Guid? id, [FromQuery] string? name)
+        public async Task<IActionResult> Delete([FromQuery] Guid id)
         {
             try
             {
-                if (id == null && string.IsNullOrEmpty(name))
-                {
-                    return BadRequest(new { message = "You must provide either an id or a name to perform the deletion." });
-                }
-
-                var host = id != null
-                    ? await _hostRepository.GetByIdAsync(id.Value)
-                    : await _hostRepository.GetByNameAsync(name);
+                var host = await _hostRepository.GetByIdAsync(id);
 
                 if (host == null)
                 {

@@ -7,11 +7,10 @@ namespace WebApi.Domain.Repositories
 {
     public interface IPropertyRepository
     {
-        Task<IEnumerable<Property_DTO>> GetAllAsync(int page, int pageSize, Expression<Func<Property_DTO, bool>>? filter = null);
-        Task<Property_DTO> GetByIdAsync(Guid? id);
-        Task<Property_DTO> GetByNameAsync(string? name, Guid hostId);
+        Task<IEnumerable<Property_DTO>> GetAllAsync(int page, int pageSize);
+        Task<Property_DTO> GetByIdAsync(Guid id);
         Task AddAsync(Property_DTO property);
-        void Update(Property_DTO property);
-        void Delete(Property_DTO property);
+        Task Update(Property_DTO property);
+        Task Delete(Property_DTO property);
     }
 }

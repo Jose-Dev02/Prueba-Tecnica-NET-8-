@@ -23,10 +23,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IHostRepository, HostRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 
 // Configure FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<BookingValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UserValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<HostValidator>();
 builder.Services.AddFluentValidationAutoValidation();

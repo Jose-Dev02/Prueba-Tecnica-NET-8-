@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Linq.Expressions;
 using WebApi.Domain.Dtos;
 using WebApi.Domain.Repositories;
@@ -23,21 +24,26 @@ namespace WebApi.Infrastructure.Repositories
             return _mapper.Map<IEnumerable<Host_DTO>>(hosts);
         }
 
-        public async Task<Host_DTO> GetByIdAsync(Guid? id)
+        public async Task<Host_DTO> GetByIdAsync(Guid id)
         {
             var host = await _context.Hosts.FirstOrDefaultAsync(h => h.Id == id);
             return _mapper.Map<Host_DTO>(host);
         }
 
-        public async Task<Host_DTO> GetByNameAsync(string? name)
-        {
-            var host = await _context.Hosts.FirstOrDefaultAsync(h => h.Name == name);
-            return _mapper.Map<Host_DTO>(host);
-        }
-
         public async Task AddAsync(Host host)
         {
-            await _context.Hosts.AddAsync(host);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _context.Hosts.AddAsync(host);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public void Update(Host_DTO hostDto)
@@ -53,6 +59,22 @@ namespace WebApi.Infrastructure.Repositories
             {
                 _context.Hosts.Attach(host);
                 _context.Entry(host).State = EntityState.Modified;
+            }
+        }
+
+        public async Task UpdateAsync(Host host)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _context.Hosts.Update(host);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
             }
         }
 
@@ -77,6 +99,32 @@ namespace WebApi.Infrastructure.Repositories
                 _context.Hosts.Attach(host);
                 _context.Hosts.Remove(host);
             }
+        }
+
+        public async Task DeleteAsync(Guid hostId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var host = await _context.Hosts.FindAsync(hostId);
+                if (host != null)
+                {
+                    _context.Hosts.Remove(host);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<Host_DTO> GetByFullNameAsync(string name)
+        {
+            var host = await _context.Hosts.FirstOrDefaultAsync(h => h.FullName == name);
+            return _mapper.Map<Host_DTO>(host);
         }
     }
 }

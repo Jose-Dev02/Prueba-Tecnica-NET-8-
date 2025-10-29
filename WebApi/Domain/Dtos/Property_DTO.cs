@@ -1,6 +1,4 @@
-﻿
-
-namespace WebApi.Domain.Dtos
+﻿namespace WebApi.Domain.Dtos
 {
     public class Property_DTO
     {
@@ -9,7 +7,7 @@ namespace WebApi.Domain.Dtos
 
             public string Name { get; set; } = string.Empty;
 
-            public string Address { get; set; } = string.Empty;
+            public string Location { get; set; } = string.Empty;
 
             public Guid HostId { get; set; }
     }
