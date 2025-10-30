@@ -71,21 +71,31 @@ namespace WebApi.Infrastructure.Repositories
 
         public async Task Update(Property_DTO propertyDto)
         {
-            var property = _mapper.Map<Property>(propertyDto);
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var trackedEntity = _context.Properties.Local.FirstOrDefault(p => p.Id == property.Id);
+                var existingEntity = await _context.Properties.FirstOrDefaultAsync(p => p.Id == propertyDto.Id);
+                if (existingEntity == null)
+                {
+                    throw new KeyNotFoundException($"Property with Id {propertyDto.Id} not found.");
+                }
 
-                if (trackedEntity != null)
+                var registerEvent = new DomainEvent
                 {
-                    _context.Entry(trackedEntity).CurrentValues.SetValues(property);
-                }
-                else
-                {
-                    _context.Properties.Attach(property);
-                    _context.Entry(property).State = EntityState.Modified;
-                }
+                    PropertyId = existingEntity.Id,
+                    EventType = "PropertyUpdated",
+                    PayloadJSON = JsonSerializer.Serialize(new
+                    {
+                        propertyId = existingEntity.Id,
+                        name = existingEntity.Name,
+                        location = existingEntity.Location,
+                        status = existingEntity.Status ? "Active" : "Inactive",
+                        pricePerNight = existingEntity.PricePerNight
+                    }),
+                    Property = existingEntity
+                };
+
+                await _context.DomainEvents.AddAsync(registerEvent);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -95,24 +105,6 @@ namespace WebApi.Infrastructure.Repositories
                 await transaction.RollbackAsync();
                 throw;
             }
-
-            var registerEvent = new DomainEvent
-            {
-                PropertyId = property.Id,
-                EventType = "PropertyUpdated",
-                PayloadJSON = JsonSerializer.Serialize(new
-                {
-                    propertyId = property.Id,
-                    name = property.Name,
-                    location = property.Location,
-                    status = property.Status ? "Active" : "Inactive",
-                    pricePerNight = property.PricePerNight
-
-                }),
-                Property = property,
-            };
-
-            await _context.DomainEvents.AddAsync(registerEvent);
         }
 
         public async Task Delete(Property_DTO propertyDto)

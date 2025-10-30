@@ -62,22 +62,6 @@ namespace WebApi.Infrastructure.Repositories
             }
         }
 
-        public async Task UpdateAsync(Host host)
-        {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                _context.Hosts.Update(host);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        }
-
         public void Delete(Host_DTO hostDto)
         {
             var host = _mapper.Map<Host>(hostDto);
