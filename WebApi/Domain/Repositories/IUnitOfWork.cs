@@ -6,7 +6,6 @@ namespace WebApi.Domain.Repositories
 {
     public interface IUnitOfWork : IDisposable
     {
-        IPropertyRepository PropertyRepository { get; }
         Task<int> CompleteAsync();
     }
 }

@@ -9,13 +9,13 @@ namespace WebApi.Infrastructure.Mapping
     {
         public MappingProfile()
         {
-            CreateMap<Property, Property_DTO>()
-                .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
-                .ReverseMap();
+            CreateMap<Property, Property_DTO>().ReverseMap();
 
             CreateMap<Host, Host_DTO>().ReverseMap();
 
             CreateMap<Bookings, Booking_DTO>().ReverseMap();
+
+            CreateMap<DomainEvent, DomainEvent_DTO>().ReverseMap();
         }
     }
 }

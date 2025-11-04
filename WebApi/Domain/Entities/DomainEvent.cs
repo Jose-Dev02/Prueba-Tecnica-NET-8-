@@ -18,6 +18,6 @@ namespace WebApi.Domain.Entities
         [ForeignKey("Property")]
         public Guid PropertyId { get; set; }
 
-        public required Property Property { get; set; }
+        public Property? Property { get; set; }
     }
 }
