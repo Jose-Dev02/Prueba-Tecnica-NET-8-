@@ -5,9 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using WebApi.Domain.Dtos;
 using WebApi.Domain.Entities;
 using WebApi.Domain.Repositories;
-using WebApi.Domain.RequestObjects;
 using WebApi.Infrastructure.Persistence;
 using WebApi.Infrastructure.Repositories;
 using WebApi.Infrastructure.Utilities;
@@ -24,7 +24,7 @@ namespace WebApi.Controllers
         private readonly IUserRepository _userRepository = userRepository;
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] UserRequest loginRequest)
+        public IActionResult Login([FromBody] User_DTO loginRequest)
         {
             // Generar el hash de la contraseña ingresada
             var hashedPassword = HashPassword256.HashPassword(loginRequest.Password);
@@ -60,7 +60,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("signUp")]
-        public async Task<IActionResult> SignUp([FromBody] UserRequest signRequest)
+        public async Task<IActionResult> SignUp([FromBody] User_DTO signRequest)
         {
             try
             {

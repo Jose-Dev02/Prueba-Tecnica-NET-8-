@@ -2,13 +2,11 @@
 {
     public class Property_DTO
     {
-       
             public Guid Id { get; set; }
-
             public string Name { get; set; } = string.Empty;
-
             public string Location { get; set; } = string.Empty;
-
+            public decimal PricePerNight { get; set; }
+            public bool Status { get; set; } 
             public Guid HostId { get; set; }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebApi.Domain.RequestObjects
+namespace WebApi.Domain.Dtos
 {
-    public class UserRequest
+    public class User_DTO
     {
 
         [Required]

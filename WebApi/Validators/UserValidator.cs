@@ -1,9 +1,9 @@
 using FluentValidation;
-using WebApi.Domain.RequestObjects;
+using WebApi.Domain.Dtos;
 
 namespace WebApi.Validators
 {
-    public class UserValidator : AbstractValidator<UserRequest>
+    public class UserValidator : AbstractValidator<User_DTO>
     {
         public UserValidator()
         {

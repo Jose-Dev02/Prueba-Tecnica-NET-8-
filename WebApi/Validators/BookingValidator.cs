@@ -1,9 +1,9 @@
 using FluentValidation;
-using WebApi.Domain.RequestObjects;
+using WebApi.Domain.Dtos;
 
 namespace WebApi.Validators
 {
-    public class BookingValidator : AbstractValidator<BookingRequest>
+    public class BookingValidator : AbstractValidator<Booking_DTO>
     {
         public BookingValidator()
         {
@@ -17,8 +17,8 @@ namespace WebApi.Validators
             RuleFor(b => b.CheckOut)
                 .NotEmpty().WithMessage("The CheckOut date is required.");
 
-            RuleFor(b => b.TotalPrice)
-                .GreaterThanOrEqualTo(0).WithMessage("The TotalPrice must be greater than or equal to 0.");
+            //RuleFor(b => b.TotalPrice)
+            //    .GreaterThanOrEqualTo(0).WithMessage("The TotalPrice must be greater than or equal to 0.");
         }
     }
 }

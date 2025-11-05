@@ -30,12 +30,41 @@ namespace WebApi.Infrastructure.Repositories
             return _mapper.Map<Host_DTO>(host);
         }
 
-        public async Task AddAsync(Host host)
+        public async Task<Host_DTO> GetByFullNameAsync(string name, Guid id)
+        {
+            var host = await _context.Hosts.FirstOrDefaultAsync(h => h.FullName == name && h.Id != id);
+            return _mapper.Map<Host_DTO>(host);
+        }
+
+        public async Task<Host_DTO> AddAsync(Host host)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 await _context.Hosts.AddAsync(host);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return _mapper.Map<Host_DTO>(host);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(Host_DTO hostDto)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var existingEntity = await _context.Hosts.FirstOrDefaultAsync(p => p.Id == hostDto.Id) ?? throw new KeyNotFoundException($"Host with Id {hostDto.Id} not found.");
+
+                _mapper.Map(hostDto, existingEntity);
+
+                _context.Entry(existingEntity).State = EntityState.Modified;
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
@@ -46,69 +75,26 @@ namespace WebApi.Infrastructure.Repositories
             }
         }
 
-        public void Update(Host_DTO hostDto)
-        {
-            var host = _mapper.Map<Host>(hostDto);
-            var trackedEntity = _context.Hosts.Local.FirstOrDefault(h => h.Id == host.Id);
-
-            if (trackedEntity != null)
-            {
-                _context.Entry(trackedEntity).CurrentValues.SetValues(host);
-            }
-            else
-            {
-                _context.Hosts.Attach(host);
-                _context.Entry(host).State = EntityState.Modified;
-            }
-        }
-
-        public void Delete(Host_DTO hostDto)
-        {
-            var host = _mapper.Map<Host>(hostDto);
-
-            bool hasProperties = _context.Properties.Any(p => p.HostId == host.Id);
-            if (hasProperties)
-            {
-                throw new InvalidOperationException("Cannot delete the host because it has associated properties.");
-            }
-
-            var trackedEntity = _context.Hosts.Local.FirstOrDefault(h => h.Id == host.Id);
-
-            if (trackedEntity != null)
-            {
-                _context.Hosts.Remove(trackedEntity);
-            }
-            else
-            {
-                _context.Hosts.Attach(host);
-                _context.Hosts.Remove(host);
-            }
-        }
-
-        public async Task DeleteAsync(Guid hostId)
+        public async Task DeleteAsync(Host_DTO hostDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var host = await _context.Hosts.FindAsync(hostId);
-                if (host != null)
+                bool hasProperties = _context.Properties.Any(p => p.HostId == hostDto.Id);
+                if (hasProperties)
                 {
-                    _context.Hosts.Remove(host);
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                    throw new InvalidOperationException("Cannot delete the host because it has associated properties.");
                 }
+
+                var existingEntity = await _context.Hosts.FirstOrDefaultAsync(p => p.Id == hostDto.Id) ?? throw new KeyNotFoundException($"Host with Id {hostDto.Id} not found.");
+                _context.Hosts.Remove(existingEntity);
+               
             }
             catch
             {
                 await transaction.RollbackAsync();
                 throw;
             }
-        }
-
-        public async Task<Host_DTO> GetByFullNameAsync(string name)
-        {
-            var host = await _context.Hosts.FirstOrDefaultAsync(h => h.FullName == name);
-            return _mapper.Map<Host_DTO>(host);
         }
     }
 }

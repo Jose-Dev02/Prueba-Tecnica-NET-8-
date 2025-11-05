@@ -1,13 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-using WebApi.Domain.Entities;
 using WebApi.Domain.Repositories;
-using WebApi.Domain.RequestObjects;
 using WebApi.Infrastructure.Persistence;
-using WebApi.Infrastructure.Repositories;
 
 namespace WebApi.Controllers
 {
@@ -20,7 +14,7 @@ namespace WebApi.Controllers
         private readonly IPropertyRepository _propertyRepository = propertyRepository;
         private readonly IOTAsRepository _otaRepository = otasRepository;
 
-        [HttpPost("sync")]
+        [HttpGet("sync")]
         [Authorize]
         public async Task<IActionResult> Sync([FromQuery] Guid id)
         {
@@ -32,7 +26,7 @@ namespace WebApi.Controllers
                     return BadRequest(new { message = "No property found to associate with the event." });
                 }
 
-                var domainEvent = _otaRepository.Sync(id);
+                var domainEvent = await _otaRepository.Sync(id);
 
                 await _unitOfWork.CompleteAsync();
                 return Ok(domainEvent);

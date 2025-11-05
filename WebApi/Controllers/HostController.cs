@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Domain.Entities;
+using WebApi.Domain.Dtos;
 using WebApi.Domain.Repositories;
-using WebApi.Domain.RequestObjects;
-using WebApi.Infrastructure.Persistence;
 using Host = WebApi.Domain.Entities.Host;
 
 namespace WebApi.Controllers
@@ -32,11 +30,11 @@ namespace WebApi.Controllers
 
         [HttpPost("create")]
         [Authorize]
-        public async Task<IActionResult> Create([FromBody] HostRequest hostRequest)
+        public async Task<IActionResult> Create([FromBody] Host_DTO hostRequest)
         {
             try
             {
-                var existingHost = await _hostRepository.GetByFullNameAsync(hostRequest.FullName);
+                var existingHost = await _hostRepository.GetByFullNameAsync(hostRequest.FullName,Guid.Empty);
 
                 if (existingHost != null)
                 {
@@ -49,46 +47,42 @@ namespace WebApi.Controllers
                     FullName = hostRequest.FullName,
                     Email = hostRequest.Email,
                     Phone = hostRequest.Phone,
-                    Properties = new List<Property>()
+                    Properties = []
                 };
 
-                await _hostRepository.AddAsync(newHost);
+                var createdHost = await _hostRepository.AddAsync(newHost);
                 await _unitOfWork.CompleteAsync();
-                return CreatedAtAction(nameof(GetAll), new { id = newHost.Id }, newHost);
+                return CreatedAtAction(nameof(GetAll), new { id = createdHost.Id }, createdHost);
             }
             catch(Exception e)
             {
-                return Problem(detail: e.Message, statusCode: 500);
+                return Problem(detail: e.Message, statusCode: 500 );
             }
         }
 
         [HttpPut("update")]
         [Authorize]
-        public async Task<IActionResult> Update([FromQuery] Guid id, [FromBody] HostRequest hostRequest)
+        public async Task<IActionResult> Update([FromBody] Host_DTO hostRequest)
         {
             try
             {
-                var existingHost = await _hostRepository.GetByIdAsync(id);
+                var existingHost = await _hostRepository.GetByIdAsync(hostRequest.Id);
                     
                 if (existingHost == null)
                 {
                     return NotFound(new { message = "Host not found" });
                 }
 
-                var hostWithSameFullName = await _hostRepository.GetByFullNameAsync(hostRequest.FullName);
+                var hostWithSameFullName = await _hostRepository.GetByFullNameAsync(hostRequest.FullName, hostRequest.Id);
                 if (hostWithSameFullName != null)
                 {
                     return BadRequest(new { message = "Another host with the same full name already exists." });
                 }
 
-                existingHost.FullName = hostRequest.FullName;
-                existingHost.Email = hostRequest.Email;
-                existingHost.Phone = hostRequest.Phone;
-
-                _hostRepository.Update(existingHost);
+                await _hostRepository.UpdateAsync(hostRequest);
                 await _unitOfWork.CompleteAsync();
 
-                return Ok(existingHost);
+                return Ok(hostRequest);
             }
             catch(Exception e)
             {
@@ -109,7 +103,7 @@ namespace WebApi.Controllers
                     return NotFound();
                 }
 
-                _hostRepository.Delete(host);
+                await _hostRepository.DeleteAsync(host);
                 await _unitOfWork.CompleteAsync();
 
                 return Ok(host);

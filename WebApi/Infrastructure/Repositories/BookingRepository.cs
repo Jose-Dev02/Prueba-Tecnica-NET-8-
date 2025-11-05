@@ -9,16 +9,10 @@ using System.Text.Json;
 
 namespace WebApi.Infrastructure.Repositories
 {
-    public class BookingRepository : IBookingRepository
+    public class BookingRepository(AppDbContext context, IMapper mapper) : IBookingRepository
     {
-        private readonly AppDbContext _context;
-        private readonly IMapper _mapper;
-
-        public BookingRepository(AppDbContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
+        private readonly AppDbContext _context = context;
+        private readonly IMapper _mapper = mapper;
 
         public async Task<IEnumerable<Booking_DTO>> GetAllAsync(int page, int pageSize)
         {
@@ -32,7 +26,7 @@ namespace WebApi.Infrastructure.Repositories
         public async Task<Booking_DTO> GetByIdAsync(Guid id)
         {
             var booking = await _context.Bookings.FindAsync(id);
-            return booking == null ? null : _mapper.Map<Booking_DTO>(booking);
+            return _mapper.Map<Booking_DTO>(booking);
         }
 
         public async Task AddAsync(Booking_DTO bookingDto)
@@ -86,7 +80,6 @@ namespace WebApi.Infrastructure.Repositories
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Validar solapamiento de fechas
                 var overlappingBooking = await _context.Bookings
                     .AnyAsync(b => b.PropertyId == bookingDto.PropertyId &&
                                    b.Id != bookingDto.Id &&
@@ -115,7 +108,6 @@ namespace WebApi.Infrastructure.Repositories
                             checkIn = booking.CheckIn,
                             checkOut = booking.CheckOut,
                             totalPrice = booking.TotalPrice,
-
                         }),
                         Property = property,
                     };

@@ -74,11 +74,11 @@ namespace WebApi.Infrastructure.Repositories
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var existingEntity = await _context.Properties.FirstOrDefaultAsync(p => p.Id == propertyDto.Id);
-                if (existingEntity == null)
-                {
-                    throw new KeyNotFoundException($"Property with Id {propertyDto.Id} not found.");
-                }
+                var existingEntity = await _context.Properties.FirstOrDefaultAsync(p => p.Id == propertyDto.Id) ?? throw new KeyNotFoundException($"Property with Id {propertyDto.Id} not found.");
+
+                _mapper.Map(propertyDto, existingEntity);
+
+                _context.Entry(existingEntity).State = EntityState.Modified;
 
                 var registerEvent = new DomainEvent
                 {
@@ -109,22 +109,41 @@ namespace WebApi.Infrastructure.Repositories
 
         public async Task Delete(Property_DTO propertyDto)
         {
-            var property = _mapper.Map<Property>(propertyDto);
+            var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == propertyDto.Id);
+
+            if (property == null)
+            {
+                throw new KeyNotFoundException($"Property with Id {propertyDto.Id} not found.");
+            }
+
+            var hasActiveBookings = await _context.Bookings.AnyAsync(b => b.PropertyId == property.Id && b.CheckOut > DateTime.UtcNow);
+            if (hasActiveBookings)
+            {
+                throw new InvalidOperationException("Cannot delete property with active bookings.");
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var trackedEntity = _context.Properties.Local.FirstOrDefault(p => p.Id == property.Id);
+                _context.Properties.Remove(property);
 
-                if (trackedEntity != null)
+                var registerEvent = new DomainEvent
                 {
-                    _context.Properties.Remove(trackedEntity);
-                }
-                else
-                {
-                    _context.Properties.Attach(property);
-                    _context.Properties.Remove(property);
-                }
+                    PropertyId = property.Id,
+                    EventType = "PropertyDeleted",
+                    PayloadJSON = JsonSerializer.Serialize(new
+                    {
+                        propertyId = property.Id,
+                        name = property.Name,
+                        location = property.Location,
+                        status = property.Status ? "Active" : "Inactive",
+                        pricePerNight = property.PricePerNight
 
+                    }),
+                    Property = property,
+                };
+
+                await _context.DomainEvents.AddAsync(registerEvent);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
@@ -133,24 +152,6 @@ namespace WebApi.Infrastructure.Repositories
                 await transaction.RollbackAsync();
                 throw;
             }
-
-            var registerEvent = new DomainEvent
-            {
-                PropertyId = property.Id,
-                EventType = "PropertyDeleted",
-                PayloadJSON = JsonSerializer.Serialize(new
-                {
-                    propertyId = property.Id,
-                    name = property.Name,
-                    location = property.Location,
-                    status = property.Status ? "Active" : "Inactive",
-                    pricePerNight = property.PricePerNight
-
-                }),
-                Property = property,
-            };
-
-            await _context.DomainEvents.AddAsync(registerEvent);
         }
     }
 }

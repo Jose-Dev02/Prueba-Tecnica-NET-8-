@@ -1,9 +1,9 @@
 using FluentValidation;
-using WebApi.Domain.Entities;
+using WebApi.Domain.Dtos;
 
 namespace WebApi.Validators
 {
-    public class PropertyValidator : AbstractValidator<Property>
+    public class PropertyValidator : AbstractValidator<Property_DTO>
     {
         public PropertyValidator()
         {
@@ -13,6 +13,10 @@ namespace WebApi.Validators
 
             RuleFor(p => p.Location)
                 .NotEmpty().WithMessage("The property location is required.");
+
+            RuleFor(p => p.PricePerNight).GreaterThan(0).WithMessage("The Price can not be less than 0");
+
+            RuleFor(p => p.Status).NotEmpty().WithMessage("The property status is required");
 
             RuleFor(p => p.HostId)
                 .NotEmpty().WithMessage("The HostId is required.");

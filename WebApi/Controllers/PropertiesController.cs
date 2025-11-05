@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
 using WebApi.Domain.Dtos;
 using WebApi.Domain.Repositories;
-using WebApi.Domain.RequestObjects;
 using WebApi.Infrastructure.Persistence;
 
 namespace WebApi.Controllers
@@ -35,7 +32,7 @@ namespace WebApi.Controllers
 
         [HttpPost("create")]
         [Authorize]
-        public async Task<IActionResult> Create([FromBody] PropertyRequest propertyRequest)
+        public async Task<IActionResult> Create([FromBody] Property_DTO propertyRequest)
         {
             try
             {
@@ -52,7 +49,9 @@ namespace WebApi.Controllers
                     Id = Guid.NewGuid(),
                     Name = propertyRequest.Name,
                     Location = propertyRequest.Location,
-                    HostId = propertyRequest.HostId
+                    HostId = propertyRequest.HostId,
+                    PricePerNight = propertyRequest.PricePerNight,
+                    Status = propertyRequest.Status
                 };
 
                 await _propertyRepository.AddAsync(propertyDto);
@@ -68,11 +67,11 @@ namespace WebApi.Controllers
 
         [HttpPut("update")]
         [Authorize]
-        public async Task<IActionResult> Update([FromQuery] Guid id, [FromBody] PropertyRequest propertyRequest)
+        public async Task<IActionResult> Update([FromBody] Property_DTO propertyRequest)
         {
             try
             {
-                var existingProperty = await _propertyRepository.GetByIdAsync(id);
+                var existingProperty = await _propertyRepository.GetByIdAsync(propertyRequest.Id);
 
                 if (existingProperty == null)
                 {
@@ -86,14 +85,10 @@ namespace WebApi.Controllers
                     return NotFound(new { message = "Host not exists." });
                 }
 
-                existingProperty.Name = propertyRequest.Name;
-                existingProperty.Location = propertyRequest.Location;
-                existingProperty.HostId = propertyRequest.HostId;
-
-                await _propertyRepository.Update(existingProperty);
+                await _propertyRepository.Update(propertyRequest);
                 await _unitOfWork.CompleteAsync();
 
-                return Ok(existingProperty);
+                return Ok(propertyRequest);
             }
             catch(Exception e)
             {

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Domain.Dtos;
 using WebApi.Domain.Repositories;
-using WebApi.Domain.RequestObjects;
 using WebApi.Infrastructure.Persistence;
 
 namespace WebApi.Controllers
@@ -33,7 +32,7 @@ namespace WebApi.Controllers
 
         [HttpPost("create")]
         [Authorize]
-        public async Task<IActionResult> Create([FromBody] BookingRequest bookingRequest)
+        public async Task<IActionResult> Create([FromBody] Booking_DTO bookingRequest)
         {
             try
             {
@@ -66,11 +65,11 @@ namespace WebApi.Controllers
 
         [HttpPut("update")]
         [Authorize]
-        public async Task<IActionResult> Update([FromQuery] Guid id, [FromBody] BookingRequest bookingRequest)
+        public async Task<IActionResult> Update([FromBody] Booking_DTO bookingRequest)
         {
             try
             {
-                var existingBooking = await _bookingRepository.GetByIdAsync(id);
+                var existingBooking = await _bookingRepository.GetByIdAsync(bookingRequest.Id);
 
                 if (existingBooking == null)
                 {
@@ -84,15 +83,10 @@ namespace WebApi.Controllers
                     return BadRequest(new { message = "Property not found." });
                 }
 
-                existingBooking.CheckIn = bookingRequest.CheckIn;
-                existingBooking.CheckOut = bookingRequest.CheckOut;
-                existingBooking.TotalPrice = bookingRequest.TotalPrice;
-                existingBooking.PropertyId = bookingRequest.PropertyId;
-
-                await _bookingRepository.Update(existingBooking);
+                await _bookingRepository.Update(bookingRequest);
                 await _unitOfWork.CompleteAsync();
 
-                return Ok(existingBooking);
+                return Ok(bookingRequest);
             }
             catch (Exception e)
             {
