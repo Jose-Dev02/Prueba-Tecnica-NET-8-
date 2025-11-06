@@ -43,6 +43,11 @@ namespace WebApi.Controllers
                     return BadRequest(new { message = "Property not found." });
                 }
 
+                if (!property.Status)
+                {
+                    return BadRequest(new { message = "Property inactive." });
+                }
+
                 var bookingDto = new Booking_DTO
                 {
                     Id = Guid.NewGuid(),
